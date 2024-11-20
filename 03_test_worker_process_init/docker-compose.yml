@@ -1,0 +1,36 @@
+version: '3'
+services:
+  redis:
+    image: redis:7
+    ports:
+      - 6379:6379
+
+  celery_app:
+    build:
+      context: .
+    image: celery_app
+
+  # Common configuration for Celery workers
+  x-celery-worker:
+    &celery_worker
+    image: celery_app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+
+  celery_01_shutdown:
+    <<: *celery_worker
+    command: celery -A app.01_shutdown:app worker --loglevel=info
+
+  celery_02_exit:
+    <<: *celery_worker
+    command: celery -A app.02_exit:app worker --loglevel=info
+
+  celery_03_sleep_and_shutdown:
+    <<: *celery_worker
+    command: celery -A app.03_sleep_and_shutdown:app worker --loglevel=info
+
+  celery_04_sleep_and_exit:
+    <<: *celery_worker
+    command: celery -A app.04_sleep_and_exit:app worker --loglevel=info
