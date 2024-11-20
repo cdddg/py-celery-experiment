@@ -1,0 +1,4 @@
+asgi-correlation-id[celery]==4.3.4
+celery==5.4.0
+colorlog==6.9.0
+redis==5.2.0
