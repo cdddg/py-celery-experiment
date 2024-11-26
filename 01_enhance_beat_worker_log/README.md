@@ -95,37 +95,38 @@ def on_after_setup_logger(logger, *args, **kwargs):
 引入 correlation ID 和任務層級上下文後，log 更加清晰，能快速追蹤任務的執行狀態與依賴關係：
 
 ```
-   correlation-id          current-id
-         |      parent-id      |
-         |          |          |
-INFO [        ] [        ] [        ] celery.beat            | Scheduler: Sending due task test-nested-job (app.task.first_task)
-INFO [        ] [        ] [        ] celery.worker.strategy | Task app.task.first_task[ea2e59f9-b293-4d64-bf65-f5125ebb97e1] received
-INFO [95382411] [        ] [ea2e59f9] app.task               | Debug task 1
-INFO [        ] [        ] [        ] celery.worker.strategy | Task app.task.second_debug_task[09c23ded-8393-4951-9a03-42fffc830d17] received
-INFO [        ] [        ] [        ] celery.worker.strategy | Task app.task.second_debug_task[81407a8c-9c54-4538-acb3-a08fe5dde561] received
-INFO [95382411] [        ] [ea2e59f9] celery.app.trace       | Task app.task.first_task[ea2e59f9-b293-4d64-bf65-f5125ebb97e1] succeeded in 0.03319657999963965s: None
-INFO [95382411] [ea2e59f9] [09c23ded] app.task               | Debug task 2
-INFO [        ] [        ] [        ] celery.worker.strategy | Task app.task.third_debug_task[250b8b2e-1a84-409b-ac2a-14bb953bfff3] received
-INFO [95382411] [ea2e59f9] [09c23ded] celery.app.trace       | Task app.task.second_debug_task[09c23ded-8393-4951-9a03-42fffc830d17] succeeded in 0.00590658700093627s: None
-INFO [        ] [        ] [        ] celery.worker.strategy | Task app.task.fourth_debug_task[461aac43-2619-48fa-8507-6942f56dc4aa] received
-INFO [95382411] [ea2e59f9] [81407a8c] app.task               | Debug task 2
-INFO [        ] [        ] [        ] celery.worker.strategy | Task app.task.third_debug_task[5995d3e8-a378-410d-b83b-6f1b23e8bb10] received
-INFO [95382411] [ea2e59f9] [81407a8c] celery.app.trace       | Task app.task.second_debug_task[81407a8c-9c54-4538-acb3-a08fe5dde561] succeeded in 0.006049554001947399s: None
-INFO [        ] [        ] [        ] celery.worker.strategy | Task app.task.fourth_debug_task[d10f49d0-2ee4-480c-9d9b-0bdbb9ea4c23] received
-INFO [95382411] [09c23ded] [250b8b2e] app.task               | Debug task 3
-INFO [        ] [        ] [        ] celery.worker.strategy | Task app.task.fourth_debug_task[5e1f8022-89d5-432a-a674-10b29be0a557] received
-INFO [95382411] [09c23ded] [250b8b2e] celery.app.trace       | Task app.task.third_debug_task[250b8b2e-1a84-409b-ac2a-14bb953bfff3] succeeded in 0.0036318539932835847s: None
-INFO [95382411] [09c23ded] [461aac43] app.task               | Debug task 4
-INFO [95382411] [09c23ded] [461aac43] celery.app.trace       | Task app.task.fourth_debug_task[461aac43-2619-48fa-8507-6942f56dc4aa] succeeded in 0.002018771003349684s: None
-INFO [95382411] [81407a8c] [5995d3e8] app.task               | Debug task 3
-INFO [        ] [        ] [        ] celery.worker.strategy | Task app.task.fourth_debug_task[f1dbfa52-9177-4ceb-a0fe-a00ce8a19de1] received
-INFO [95382411] [81407a8c] [5995d3e8] celery.app.trace       | Task app.task.third_debug_task[5995d3e8-a378-410d-b83b-6f1b23e8bb10] succeeded in 0.0035413389996392652s: None
-INFO [95382411] [81407a8c] [d10f49d0] app.task               | Debug task 4
-INFO [95382411] [81407a8c] [d10f49d0] celery.app.trace       | Task app.task.fourth_debug_task[d10f49d0-2ee4-480c-9d9b-0bdbb9ea4c23] succeeded in 0.001998387997446116s: None
-INFO [95382411] [250b8b2e] [5e1f8022] app.task               | Debug task 4
-INFO [95382411] [250b8b2e] [5e1f8022] celery.app.trace       | Task app.task.fourth_debug_task[5e1f8022-89d5-432a-a674-10b29be0a557] succeeded in 0.0019207799996365793s: None
-INFO [95382411] [5995d3e8] [f1dbfa52] app.task               | Debug task 4
-INFO [95382411] [5995d3e8] [f1dbfa52] celery.app.trace       | Task app.task.fourth_debug_task[f1dbfa52-9177-4ceb-a0fe-a00ce8a19de1] succeeded in 0.0017463759941165335s: None
+       process-id
+           |    correlation-id          current-id
+           |          |      parent-id      |
+           |          |          |          |
+INFO     | 1  |          |          |          | celery.beat            | Scheduler: Sending due task test-nested-job (app.task.first_task)
+INFO     | 1  |          |          |          | celery.worker.strategy | Task app.task.first_task[a3e5d1af-5636-49e6-aff9-86a3e3a766c5] received
+INFO     | 9  | 9a276155 | None     | a3e5d1af | app.task               | Debug task 1
+INFO     | 1  |          |          |          | celery.worker.strategy | Task app.task.second_debug_task[c7606e5f-c6ce-45c0-8366-c86c1d56e155] received
+INFO     | 9  | 9a276155 | None     | a3e5d1af | celery.app.trace       | Task app.task.first_task[a3e5d1af-5636-49e6-aff9-86a3e3a766c5] succeeded in 0.003938464000384556s: None
+INFO     | 8  | 9a276155 | a3e5d1af | c7606e5f | app.task               | Debug task 2
+INFO     | 1  |          |          |          | celery.worker.strategy | Task app.task.second_debug_task[6714d40b-b33d-4996-8913-8dbe823d805d] received
+INFO     | 9  | 9a276155 | a3e5d1af | 6714d40b | app.task               | Debug task 2
+INFO     | 8  | 9a276155 | a3e5d1af | c7606e5f | celery.app.trace       | Task app.task.second_debug_task[c7606e5f-c6ce-45c0-8366-c86c1d56e155] succeeded in 0.0042529099991952535s: None
+INFO     | 1  |          |          |          | celery.worker.strategy | Task app.task.third_debug_task[0a17ee29-20c1-43bc-9a0a-da19d5bd90a7] received
+INFO     | 1  |          |          |          | celery.worker.strategy | Task app.task.fourth_debug_task[697eb405-3977-4fee-8287-09767d48bf24] received
+INFO     | 9  | 9a276155 | a3e5d1af | 6714d40b | celery.app.trace       | Task app.task.second_debug_task[6714d40b-b33d-4996-8913-8dbe823d805d] succeeded in 0.004168741999819758s: None
+INFO     | 1  |          |          |          | celery.worker.strategy | Task app.task.third_debug_task[5f91f483-e28d-4f5b-8eff-304c3e42eb06] received
+INFO     | 9  | 9a276155 | c7606e5f | 0a17ee29 | app.task               | Debug task 3
+INFO     | 8  | 9a276155 | c7606e5f | 697eb405 | app.task               | Debug task 4
+INFO     | 8  | 9a276155 | c7606e5f | 697eb405 | celery.app.trace       | Task app.task.fourth_debug_task[697eb405-3977-4fee-8287-09767d48bf24] succeeded in 0.00043170599928998854s: None
+INFO     | 1  |          |          |          | celery.worker.strategy | Task app.task.fourth_debug_task[41c6afeb-5173-4a1e-bb13-7bb076c4b56b] received
+INFO     | 9  | 9a276155 | c7606e5f | 0a17ee29 | celery.app.trace       | Task app.task.third_debug_task[0a17ee29-20c1-43bc-9a0a-da19d5bd90a7] succeeded in 0.0020307229988247855s: None
+INFO     | 8  | 9a276155 | 6714d40b | 41c6afeb | app.task               | Debug task 4
+INFO     | 9  | 9a276155 | 6714d40b | 5f91f483 | app.task               | Debug task 3
+INFO     | 8  | 9a276155 | 6714d40b | 41c6afeb | celery.app.trace       | Task app.task.fourth_debug_task[41c6afeb-5173-4a1e-bb13-7bb076c4b56b] succeeded in 0.00048823299948708154s: None
+INFO     | 1  |          |          |          | celery.worker.strategy | Task app.task.fourth_debug_task[e82b49f3-0a0e-4cf7-bcbb-ea3797ec4468] received
+INFO     | 9  | 9a276155 | 6714d40b | 5f91f483 | celery.app.trace       | Task app.task.third_debug_task[5f91f483-e28d-4f5b-8eff-304c3e42eb06] succeeded in 0.0017306089994235663s: None
+INFO     | 1  |          |          |          | celery.worker.strategy | Task app.task.fourth_debug_task[f2b88702-34a5-4bb8-b18b-dbe6ec133de2] received
+INFO     | 9  | 9a276155 | 0a17ee29 | e82b49f3 | app.task               | Debug task 4
+INFO     | 8  | 9a276155 | 5f91f483 | f2b88702 | app.task               | Debug task 4
+INFO     | 9  | 9a276155 | 0a17ee29 | e82b49f3 | celery.app.trace       | Task app.task.fourth_debug_task[e82b49f3-0a0e-4cf7-bcbb-ea3797ec4468] succeeded in 0.0002958130007755244s: None
+INFO     | 8  | 9a276155 | 5f91f483 | f2b88702 | celery.app.trace       | Task app.task.fourth_debug_task[f2b88702-34a5-4bb8-b18b-dbe6ec133de2] succeeded in 0.00036187600017001387s: None
 ```
 
 <br>
@@ -215,18 +216,37 @@ def on_task_prerun(task, **kwargs):
 ## 5. Results
 
 ```diff
-      correlation-id          current-id
-            |      parent-id      |
-            |          |          |
-+ INFO [95382411] [        ] [        ] app.celerylogging      | Scheduler: Sending due task test-nested-job (app.task.first_task) in @before_task_publish
-+ INFO [95382411] [        ] [ea2e59f9] app.celerylogging      | Task app.task.first_task[ea2e59f9-b293-4d64-bf65-f5125ebb97e1] received in @task_prerun
-  INFO [95382411] [        ] [ea2e59f9] app.task               | Debug task 1
-+ INFO [95382411] [ea2e59f9] [09c23ded] celery.worker.strategy | Task app.task.second_debug_task[09c23ded-8393-4951-9a03-42fffc830d17] received in @task_prerun
-+ INFO [95382411] [ea2e59f9] [81407a8c] celery.worker.strategy | Task app.task.second_debug_task[81407a8c-9c54-4538-acb3-a08fe5dde561] received in @task_prerun
-  INFO [95382411] [        ] [ea2e59f9] celery.app.trace       | Task app.task.first_task[ea2e59f9-b293-4d64-bf65-f5125ebb97e1] succeeded in 0.03319657999963965s: None
-  INFO [95382411] [ea2e59f9] [09c23ded] app.task               | Debug task 2
-...
+         process-id
+             |  correlation-id         current-id
+             |        |      parent-id      |
+             |        |          |          |
++ INFO     | 1  | 3baff0df |          |          | app.celerylogging      | Scheduler: Sending due task test-nested-job (app.task.first_task) in @before_task_publish
++ INFO     | 9  | 3baff0df |          | 65445384 | app.celerylogging      | Task app.task.first_task[65445384-3eec-4494-9403-1bb78dc30cfd] received in in @task_prerun
+  INFO     | 9  | 3baff0df |          | 65445384 | app.task               | Debug task 1
+  INFO     | 9  | 3baff0df |          | 65445384 | celery.app.trace       | Task app.task.first_task[65445384-3eec-4494-9403-1bb78dc30cfd] succeeded in 0.005659813003148884s: None
++ INFO     | 9  | 3baff0df | 65445384 | 4ff0d138 | app.celerylogging      | Task app.task.second_debug_task[4ff0d138-fd45-4feb-ba9e-62e34c171dd3] received in in @task_prerun
++ INFO     | 8  | 3baff0df | 65445384 | af7b640e | app.celerylogging      | Task app.task.second_debug_task[af7b640e-ed2d-440b-b0a4-c7232cbd3fab] received in in @task_prerun
+  INFO     | 9  | 3baff0df | 65445384 | 4ff0d138 | app.task               | Debug task 2
+  INFO     | 8  | 3baff0df | 65445384 | af7b640e | app.task               | Debug task 2
+  INFO     | 8  | 3baff0df | 65445384 | af7b640e | celery.app.trace       | Task app.task.second_debug_task[af7b640e-ed2d-440b-b0a4-c7232cbd3fab] succeeded in 0.004440903998329304s: None
+  INFO     | 9  | 3baff0df | 65445384 | 4ff0d138 | celery.app.trace       | Task app.task.second_debug_task[4ff0d138-fd45-4feb-ba9e-62e34c171dd3] succeeded in 0.004619617000571452s: None
++ INFO     | 9  | 3baff0df | 4ff0d138 | 89815ee9 | app.celerylogging      | Task app.task.third_debug_task[89815ee9-a940-46bf-92c8-a5f5acc1a43f] received in in @task_prerun
++ INFO     | 8  | 3baff0df | af7b640e | d79735d8 | app.celerylogging      | Task app.task.third_debug_task[d79735d8-9816-4222-8320-b146a797b960] received in in @task_prerun
+  INFO     | 9  | 3baff0df | 4ff0d138 | 89815ee9 | app.task               | Debug task 3
+  INFO     | 8  | 3baff0df | af7b640e | d79735d8 | app.task               | Debug task 3
+  INFO     | 8  | 3baff0df | af7b640e | d79735d8 | celery.app.trace       | Task app.task.third_debug_task[d79735d8-9816-4222-8320-b146a797b960] succeeded in 0.002787550001812633s: None
+  INFO     | 9  | 3baff0df | 4ff0d138 | 89815ee9 | celery.app.trace       | Task app.task.third_debug_task[89815ee9-a940-46bf-92c8-a5f5acc1a43f] succeeded in 0.002928071000496857s: None
++ INFO     | 9  | 3baff0df | af7b640e | 2bd2d543 | app.celerylogging      | Task app.task.fourth_debug_task[2bd2d543-19e2-43ed-8aa9-9478157d9ad8] received in in @task_prerun
++ INFO     | 8  | 3baff0df | 4ff0d138 | 2740f5cf | app.celerylogging      | Task app.task.fourth_debug_task[2740f5cf-6d5c-4d0a-a2da-53b5c75bc365] received in in @task_prerun
+  INFO     | 9  | 3baff0df | af7b640e | 2bd2d543 | app.task               | Debug task 4
+  INFO     | 8  | 3baff0df | 4ff0d138 | 2740f5cf | app.task               | Debug task 4
+  INFO     | 9  | 3baff0df | af7b640e | 2bd2d543 | celery.app.trace       | Task app.task.fourth_debug_task[2bd2d543-19e2-43ed-8aa9-9478157d9ad8] succeeded in 0.0005955449960310943s: None
+  INFO     | 8  | 3baff0df | 4ff0d138 | 2740f5cf | celery.app.trace       | Task app.task.fourth_debug_task[2740f5cf-6d5c-4d0a-a2da-53b5c75bc365] succeeded in 0.0009539919992676005s: None
++ INFO     | 9  | 3baff0df | d79735d8 | f5bf3ed7 | app.celerylogging      | Task app.task.fourth_debug_task[f5bf3ed7-480e-4b07-8c41-683ce391eb10] received in in @task_prerun
++ INFO     | 8  | 3baff0df | 89815ee9 | cb6d30cc | app.celerylogging      | Task app.task.fourth_debug_task[cb6d30cc-769e-4491-ac37-d346ca870c27] received in in @task_prerun
+  INFO     | 8  | 3baff0df | 89815ee9 | cb6d30cc | app.task               | Debug task 4
+  INFO     | 9  | 3baff0df | d79735d8 | f5bf3ed7 | app.task               | Debug task 4
+  INFO     | 8  | 3baff0df | 89815ee9 | cb6d30cc | celery.app.trace       | Task app.task.fourth_debug_task[cb6d30cc-769e-4491-ac37-d346ca870c27] succeeded in 0.0008838119974825531s: None
+  INFO     | 9  | 3baff0df | d79735d8 | f5bf3ed7 | celery.app.trace       | Task app.task.fourth_debug_task[f5bf3ed7-480e-4b07-8c41-683ce391eb10] succeeded in 0.0009317440053564496s: None
 ```
-
-
 
