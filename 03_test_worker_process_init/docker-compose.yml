@@ -19,18 +19,27 @@ services:
     depends_on:
       - redis
 
-  celery_01_shutdown:
+  test_01:
     <<: *celery_worker
-    command: celery -A app.01_shutdown:app worker --loglevel=info
+    command: celery -A app.01_shutdown:app worker
 
-  celery_02_exit:
+  test_02:
     <<: *celery_worker
-    command: celery -A app.02_exit:app worker --loglevel=info
+    command: celery -A app.02_exit:app worker
 
-  celery_03_sleep_and_shutdown:
+  test_03:
     <<: *celery_worker
-    command: celery -A app.03_sleep_and_shutdown:app worker --loglevel=info
+    command: celery -A app.03_sleep_and_shutdown:app worker
 
-  celery_04_sleep_and_exit:
+  test_04:
     <<: *celery_worker
-    command: celery -A app.04_sleep_and_exit:app worker --loglevel=info
+    command: celery -A app.04_sleep_and_exit:app worker
+
+  test_05:
+    <<: *celery_worker
+    command: celery -A app.05_shutdown_exit:app worker
+
+  test_06:
+    <<: *celery_worker
+    command: celery -A app.06_sleep_and_shutdown_exit:app worker
+

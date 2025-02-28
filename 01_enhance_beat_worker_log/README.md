@@ -1,8 +1,8 @@
-# Improving Celery Task Log Traceability
+# <span id="title">Improving Celery Task Log Traceability</span>
 
+<span id="description">
 這篇紀錄旨在探討如何提升 Celery 記錄的可追蹤性和閱讀性，讓管理和除錯過程更為高效。
-
-<br>
+</span>
 
 ## 1. Challenges in Log Tracking
 

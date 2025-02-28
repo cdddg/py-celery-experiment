@@ -1,6 +1,8 @@
-# Celery Signals Execution Order
+# <span id="title">Celery Signals Execution Order</span>
 
+<span id="description">
 This document outlines the order of signal execution during the startup of Celery workers, beat, and task lifecycle.
+</span>
 
 ## Worker Startup Signal Order
 
