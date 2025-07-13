@@ -1,16 +1,14 @@
 # <span id="title">Improving Celery Task Log Traceability</span>
 
-<span id="description">
-這篇紀錄旨在探討如何提升 Celery 記錄的可追蹤性和閱讀性，讓管理和除錯過程更為高效。
-</span>
+<span id="description"> 這篇紀錄主要在分享怎麼讓 Celery 的日誌更好追蹤、更好讀，讓管理和除錯都更有效率。 </span>
 
-## 1. Challenges in Log Tracking
+## 1. Log 追蹤時遇到的問題
 
-在使用 Celery 處理大量任務時，分析其原始 log 往往會面臨以下問題：
+用 Celery 執行大量任務時，直接看原始的 log 常會碰到這些困難：
 
-- **任務追蹤困難**：大量 log 中難以快速定位特定任務的相關訊息。
-- **缺乏清晰的上下文連結**：log 條目之間的依賴關係不明顯，尤其是跨任務的觸發與父子關係。
-- **記錄冗長**：重複且缺乏重點的訊息，增加了閱讀與分析的負擔。
+- **任務不好追蹤**：海量日誌裡很難快速找到某個任務相關的訊息。
+- **上下文關係不明**：log 裡任務之間的觸發與父子關係看不出來，沒辦法知道彼此關聯。
+- **日誌過多又雜亂**：重複的訊息多又沒重點，讀起來很吃力。
 
 e.g.:
 
@@ -45,21 +43,23 @@ e.g.:
 [2023-12-30 10:46:38,769: INFO/MainProcess] Task app.task.fourth_debug_task[13d421f1-120e-4e41-804c-9133a9ef2a66] succeeded in 0.04080406000000103s: None
 ```
 
+整體來說，任務關聯和執行狀態不容易一目了然。
+
 <br>
 
-## 2. Initial Optimization: Introducing `asgi-correlation-id`
+## 2. 第一波優化：導入 `asgi-correlation-id`
 
-為了解決上述問題，採用了 [asgi-correlation-id](https://github.com/snok/asgi-correlation-id) 套件，為每個任務生成獨特的識別碼 (correlation ID)，並結合 Celery 任務的上下文資訊進行 log 優化。
+為了解決上述問題，我們引入了 [asgi-correlation-id](https://github.com/snok/asgi-correlation-id) 這個套件，幫每個任務生成獨一無二的識別碼（correlation ID），並把它跟 Celery 的 task_id 結合，讓 log 裡可以帶著上下文跑。
 
-### 解決方案概述
+### 怎麼做的？
 
-以下是優化方案的關鍵步驟：
+主要步驟如下：
 
-1. **整合 correlation ID 與 Celery 的 task_id**：自動將上下文 ID 添加到每條 log 條目中。
-2. **格式化輸出**：使用更清晰的 log 格式，顯示任務關聯的父子 ID。
-3. **過濾冗餘訊息**：忽略不必要的系統訊息，僅保留重要內容。
+1. **把 correlation ID 跟 Celery 的 task_id 綁在一起**，自動加到每條 log 裡。
+2. **格式化輸出**，讓 log 清楚顯示任務的父子關係。
+3. **過濾不重要的系統訊息**，只留重點。
 
-#### 具體實現
+#### 具體程式碼示意：
 
 在 Celery 初始化時載入相關功能：
 
@@ -70,7 +70,7 @@ load_correlation_ids()
 load_celery_current_and_parent_ids(use_internal_celery_task_id=True)
 ```
 
-新增自定義 log 過濾器與格式化器：
+接著定義自訂的 log filter 和 formatter：
 
 ```python
 @after_setup_logger.connect(weak=False)
@@ -90,9 +90,9 @@ def on_after_setup_logger(logger, *args, **kwargs):
 
 <br>
 
-## 3. Optimized Log
+## 3. 優化後的 Log 範例
 
-引入 correlation ID 和任務層級上下文後，log 更加清晰，能快速追蹤任務的執行狀態與依賴關係：
+加入 correlation ID 和任務層級的上下文後，log 看起來就更清楚了，任務的執行狀態和關聯一目了然：
 
 ```
        process-id
@@ -131,11 +131,11 @@ INFO     | 8  | 9a276155 | 5f91f483 | f2b88702 | celery.app.trace       | Task a
 
 <br>
 
-## 4. Advanced Improvements: Addressing Missing Context
+## 4. 進階改善：補足缺失的上下文
 
-### 4-1. Scheduler 的 log 缺乏上下文資訊
+### 4-1. Scheduler 的 log 缺少上下文
 
-Celery 的 Scheduler 在執行 `apply_entry` 時記錄了任務分派訊息，但此時 correlation ID 尚未初始化，導致 log 缺乏上下文。
+Celery Scheduler 在執行 `apply_entry` 發送任務時，correlation ID 還沒初始化，因此 log 會缺少關鍵上下文。
 
 ```python
 class Scheduler:
@@ -149,7 +149,7 @@ class Scheduler:
 
 ### 4-2. Worker 的 log 與訊號不同步
 
-Celery Worker 在記錄 `LOG_RECEIVED` 後才觸發 `task_received` 訊號，可能導致部分 log 缺乏關鍵上下文。
+Celery Worker 在記錄 `LOG_RECEIVED` 時，還沒觸發 `task_received` 訊號，有些 log 因此缺上下文。
 
 ```python
 def default(task, app, consumer,
@@ -171,9 +171,9 @@ def default(task, app, consumer,
     ...
 ```
 
-### 解決方法
+### 解決方案
 
-#### (1) 自訂 log filter，忽略冗餘訊息
+#### (1) 自訂 log filter 過濾不必要的重複訊息
 
 ```diff
 + class IgnoreSpecificLogFilter(logging.Filter):
@@ -190,9 +190,7 @@ def default(task, app, consumer,
       ...
 ```
 
-#### (2) 在 Scheduler 和 Worker 關鍵點補充上下文
-
-在任務發布和接收的關鍵時刻重寫 log 記錄邏輯，確保完整性：
+#### (2) 在 Scheduler 和 Worker 的關鍵時刻主動補上下文 log
 
 ```python
 @before_task_publish.connect(weak=False)
@@ -213,7 +211,9 @@ def on_task_prerun(task, **kwargs):
 
 <br>
 
-## 5. Results
+## 5. 最終結果
+
+調整後，Scheduler 發送任務與 Worker 接收任務的 log 補足了缺失的上下文，並過濾掉重複訊息，整體日誌清楚且易於追蹤：
 
 ```diff
          process-id
